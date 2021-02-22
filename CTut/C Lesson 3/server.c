@@ -1,0 +1,83 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h> //contains constants and structures needed for internet domain addresses.
+#include <string.h>
+#define PORT 8080
+
+
+int main(int argc, char const *argv[])
+{
+    /**
+    * server_fd and newsockfd are file descriptors, i.e. array subscripts into the file descriptor table . These two variables store
+    * the values returned by the socket system call and the accept system call.portno stores the port number on which the server accepts connections.
+    * valread is the return value for the read() and write() calls; i.e. it contains the number of characters read or written.
+    **/
+    int server_fd, new_socket, valread;
+    /**
+    * A sockaddr_in is a structure containing an internet address. This structure is defined in <netinet/in.h>. Here is the definition:
+        struct sockaddr_in {
+        short   sin_family;
+        u_short sin_port;
+        struct  in_addr sin_addr;
+        char    sin_zero[8];
+        };
+    */
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+
+    char buffer[1024] = {0};  //buffer used to read data from socket
+    char *hello = "Hello from server";
+
+    // Creating socket file descriptor, using socket system call
+    // First arg: AF_INET -> internet domain address
+    // Can also use AF_UNIX -> Unix domain address
+    // Second arg: Type of socket with different streams used to send stream of characters
+    // SOCK_STREAM
+    // SOCK_DGRAM
+    // Third arg: Protocol. Leave as 0 to let OS decide
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons( PORT );
+        
+    // Forcefully attaching socket to the port 8080
+    /*
+        First argument: the socket file descriptor, 
+        Second argument: the address to which is bound 
+        Third argument: the size of the address to which it is bound. 
+    */
+    if (bind(server_fd, (struct sockaddr *)&address, 
+                                sizeof(address))<0)
+    {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(server_fd, 3) < 0)
+    {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, 
+                        (socklen_t*)&addrlen))<0)
+    {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+
+    // read() is also a blocking system call
+    valread = read( new_socket , buffer, 1024); //SYSTEM CALL
+    printf("%s\n",buffer );
+    send(new_socket , hello , strlen(hello) , 0 );
+    printf("Hello message sent\n");
+    return 0;
+
+
+}
