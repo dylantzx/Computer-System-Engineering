@@ -337,10 +337,7 @@ int shellExecuteInput(char **args)
         }
 
       }
-      else
-      {
-        
-      }
+
     }
     printf("Invalid command received. Type help to see what commands are implemented.\n");
     return 1;
